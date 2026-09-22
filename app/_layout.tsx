@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Stack, router, useRootNavigationState } from 'expo-router';
-import * as Notifications from 'expo-notifications';
+import * as Notifications from '../src/services/localNotifications';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { responseEventId } from '../src/services/reminders';

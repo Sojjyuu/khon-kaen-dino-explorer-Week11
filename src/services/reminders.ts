@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
+import * as Notifications from './localNotifications';
 import { getEvent, isEventId } from '../data/events';
 
 export const REMINDER_CHANNEL = 'event-reminders';

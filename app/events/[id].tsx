@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, AppState, Linking, ScrollView, Text, View } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import * as Notifications from 'expo-notifications';
+import * as Notifications from '../../src/services/localNotifications';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CampusEvent, deleteEvent, formatEventTime, getEvent, isEventId, isUserCreatedEvent } from '../../src/data/events';
 import { pointsOfInterest } from '../../src/data/pointsOfInterest';

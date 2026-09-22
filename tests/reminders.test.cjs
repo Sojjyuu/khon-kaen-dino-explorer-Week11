@@ -25,7 +25,7 @@ function setup({ granted = true } = {}) {
   }).outputText;
   vm.runInNewContext(code, { exports, require: name => {
     if (name === 'react-native') return { Platform: { OS: 'android' } };
-    if (name === 'expo-notifications') return notifications;
+    if (name === './localNotifications') return notifications;
     if (name === '../data/events') return {
       getEvent: async id => id === event.id ? event : undefined,
       isEventId: id => typeof id === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(id),
