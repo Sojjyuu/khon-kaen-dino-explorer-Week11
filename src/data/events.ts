@@ -70,6 +70,29 @@ export async function addEvent(title: string, startsAt: Date) {
   return event;
 }
 
+export function isUserCreatedEvent(event: Pick<CampusEvent, 'id'> | string) {
+  const id = typeof event === 'string' ? event : event.id;
+  return id.startsWith('local-');
+}
+
+export async function deleteEvent(id: unknown) {
+  if (!isEventId(id)) {
+    throw new Error('รหัสกิจกรรมไม่ถูกต้อง');
+  }
+  if (!isUserCreatedEvent(id)) {
+    throw new Error('ลบได้เฉพาะกิจกรรมที่สร้างเอง');
+  }
+
+  const events = await getEvents();
+  const exists = events.some(event => event.id === id);
+  if (!exists) return false;
+
+  const next = events.filter(event => event.id !== id);
+  await AsyncStorage.setItem(KEY, JSON.stringify(next));
+  initialization = Promise.resolve(next);
+  return true;
+}
+
 export function formatEventTime(iso: string) {
   return new Date(iso).toLocaleString('th-TH', {
     timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric',
