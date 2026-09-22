@@ -85,6 +85,61 @@ export function PoiExplorerScreen() {
             </View>
           </View>
 
+          <View style={styles.searchSection}>
+            <Text style={styles.sectionEyebrow}>SEARCH & FILTER</Text>
+            <Text style={styles.searchTitle}>ค้นหาสถานที่</Text>
+            <TextInput
+              accessibilityLabel="ค้นหาสถานที่"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="ค้นหาชื่อ หมวด หรือที่อยู่…"
+              placeholderTextColor="#8A93A2"
+              returnKeyType="search"
+              style={styles.searchInput}
+            />
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterRow}
+            >
+              {categories.map((category) => {
+                const selected = selectedCategory === category;
+                return (
+                  <Pressable
+                    key={category}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    onPress={() => setSelectedCategory(category)}
+                    style={[styles.filterChip, selected && styles.filterChipSelected]}
+                  >
+                    <Text style={[styles.filterChipText, selected && styles.filterChipTextSelected]}>
+                      {category}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            <View style={styles.searchMetaRow}>
+              <Text style={styles.searchMeta}>
+                พบ {filteredPoints.length} จาก {pointsOfInterest.length} สถานที่
+              </Text>
+              {(searchQuery || selectedCategory !== 'ทั้งหมด') && (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setSearchQuery('');
+                    setSelectedCategory('ทั้งหมด');
+                  }}
+                >
+                  <Text style={styles.clearFilterText}>ล้างตัวกรอง</Text>
+                </Pressable>
+              )}
+            </View>
+          </View>
+
+
           <View style={styles.mapSectionHeader}>
             <View>
               <Text style={styles.sectionEyebrow}>INTERACTIVE MAP</Text>
@@ -137,60 +192,6 @@ export function PoiExplorerScreen() {
               <Link href="/trip" accessibilityRole="button" style={styles.tripLink}>
                 <Text style={styles.tripLinkText}>ดู My Trip →</Text>
               </Link>
-            </View>
-          </View>
-
-          <View style={styles.searchSection}>
-            <Text style={styles.sectionEyebrow}>SEARCH & FILTER</Text>
-            <Text style={styles.searchTitle}>ค้นหาสถานที่</Text>
-            <TextInput
-              accessibilityLabel="ค้นหาสถานที่"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="ค้นหาชื่อ หมวด หรือที่อยู่…"
-              placeholderTextColor="#8A93A2"
-              returnKeyType="search"
-              style={styles.searchInput}
-            />
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.filterRow}
-            >
-              {categories.map((category) => {
-                const selected = selectedCategory === category;
-                return (
-                  <Pressable
-                    key={category}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    onPress={() => setSelectedCategory(category)}
-                    style={[styles.filterChip, selected && styles.filterChipSelected]}
-                  >
-                    <Text style={[styles.filterChipText, selected && styles.filterChipTextSelected]}>
-                      {category}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            <View style={styles.searchMetaRow}>
-              <Text style={styles.searchMeta}>
-                พบ {filteredPoints.length} จาก {pointsOfInterest.length} สถานที่
-              </Text>
-              {(searchQuery || selectedCategory !== 'ทั้งหมด') && (
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('ทั้งหมด');
-                  }}
-                >
-                  <Text style={styles.clearFilterText}>ล้างตัวกรอง</Text>
-                </Pressable>
-              )}
             </View>
           </View>
 
