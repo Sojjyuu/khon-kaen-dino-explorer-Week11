@@ -46,7 +46,7 @@ function ContactButton({ label, value, url, filled = false }: ContactButtonProps
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={\`\${label}: \${value}\`}
+      accessibilityLabel={`${label}: ${value}`}
       onPress={open}
       style={[styles.contactButton, filled && styles.contactButtonFilled]}
     >
@@ -137,7 +137,7 @@ export default function ProfileScreen() {
 
             <View style={styles.contactList}>
               <ContactButton label="GitHub" value="github.com/Sojjyuu" url={PROFILE.github} filled />
-              <ContactButton label="Email" value={PROFILE.email} url={\`mailto:\${PROFILE.email}\`} />
+              <ContactButton label="Email" value={PROFILE.email} url={`mailto:${PROFILE.email}`} />
               <ContactButton label="Instagram" value="@smth_yu" url={PROFILE.instagram} />
             </View>
           </View>
