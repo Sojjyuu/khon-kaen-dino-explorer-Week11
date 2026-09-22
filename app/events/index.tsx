@@ -102,6 +102,7 @@ export default function Events() {
         </View>
         <Text style={s.subtitle}>รายการกิจกรรม</Text>
         {events.map(event => <View key={event.id} style={s.card}>
+          {isUserCreatedEvent(event) && <Text style={s.text}>★ กิจกรรมของคุณ • ลบได้</Text>}
           <Text style={s.subtitle}>{event.title}</Text>
           <Text style={s.text}>{formatEventTime(event.startsAt)}</Text>
           <Text style={s.text}>⌖ {pointsOfInterest.find(p => p.id === event.poiId)?.name}</Text>
