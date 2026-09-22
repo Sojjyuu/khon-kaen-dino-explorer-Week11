@@ -115,7 +115,7 @@ export default function CameraScreen() {
       });
 
       await Asset.create(capturedUri);
-      setMessage(\`บันทึกภาพ (\${selectedFilter.label}) ลง Photos เรียบร้อยแล้ว ✓\`);
+      setMessage(`บันทึกภาพ (${selectedFilter.label}) ลง Photos เรียบร้อยแล้ว ✓`);
       Alert.alert('บันทึกสำเร็จ', 'รูปพร้อมฟิลเตอร์ถูกบันทึกลง Photos แล้ว');
     } catch (error) {
       console.error('Save photo failed:', error);
@@ -189,7 +189,7 @@ export default function CameraScreen() {
                     accessibilityState={{ selected }}
                     onPress={() => {
                       setFilterId(filter.id);
-                      setMessage(\`เลือกฟิลเตอร์ \${filter.label} แล้ว — พร้อมบันทึก\`);
+                      setMessage(`เลือกฟิลเตอร์ ${filter.label} แล้ว — พร้อมบันทึก`);
                     }}
                     style={[styles.filterChip, selected && styles.filterChipSelected]}
                   >
