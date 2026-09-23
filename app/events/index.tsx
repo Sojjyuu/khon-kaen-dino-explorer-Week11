@@ -3,10 +3,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { addEvent, CampusEvent, deleteEvent, formatEventTime, getEvents, isUserCreatedEvent } from '../../src/data/events';
+import { addEvent, CampusEvent, formatEventTime, getEvents } from '../../src/data/events';
 import { pointsOfInterest } from '../../src/data/pointsOfInterest';
 import { Action, eventStyles as s } from '../../src/components/EventUI';
-import { cancelEventReminder } from '../../src/services/reminders';
 
 export default function Events() {
   const [events, setEvents] = useState<CampusEvent[]>([]);
@@ -21,7 +20,6 @@ export default function Events() {
   const [picker, setPicker] = useState<'date' | 'time' | null>(null);
   const saving = useRef(false);
   const [busy, setBusy] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const load = useCallback(() => {
     setLoading(true);
     getEvents().then(result => { setEvents(result); setError(''); })
@@ -39,34 +37,6 @@ export default function Events() {
       router.push({ pathname: '/events/[id]', params: { id: event.id } });
     } catch (e) { Alert.alert('สร้างกิจกรรมไม่ได้', e instanceof Error ? e.message : 'กรุณาลองอีกครั้ง'); }
     finally { saving.current = false; setBusy(false); }
-  };
-  const remove = (event: CampusEvent) => {
-    if (!isUserCreatedEvent(event)) return;
-    Alert.alert(
-      'ลบกิจกรรมนี้?',
-      `“${event.title}” จะถูกลบออกจากเครื่อง และการแจ้งเตือนของกิจกรรมนี้จะถูกยกเลิกด้วย`,
-      [
-        { text: 'ยกเลิก', style: 'cancel' },
-        {
-          text: 'ลบกิจกรรม',
-          style: 'destructive',
-          onPress: () => {
-            void (async () => {
-              setDeletingId(event.id);
-              try {
-                await cancelEventReminder(event.id).catch(() => undefined);
-                await deleteEvent(event.id);
-                load();
-              } catch (e) {
-                Alert.alert('ลบกิจกรรมไม่ได้', e instanceof Error ? e.message : 'กรุณาลองอีกครั้ง');
-              } finally {
-                setDeletingId(null);
-              }
-            })();
-          },
-        },
-      ],
-    );
   };
   return <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={100}>
@@ -102,18 +72,10 @@ export default function Events() {
         </View>
         <Text style={s.subtitle}>รายการกิจกรรม</Text>
         {events.map(event => <View key={event.id} style={s.card}>
-          {isUserCreatedEvent(event) && <Text style={s.text}>★ กิจกรรมของคุณ • ลบได้</Text>}
           <Text style={s.subtitle}>{event.title}</Text>
           <Text style={s.text}>{formatEventTime(event.startsAt)}</Text>
           <Text style={s.text}>⌖ {pointsOfInterest.find(p => p.id === event.poiId)?.name}</Text>
           <Action title="ดูรายละเอียด / ตั้งเตือน" onPress={() => router.push({ pathname: '/events/[id]', params: { id: event.id } })} />
-          {isUserCreatedEvent(event) && (
-            <Action
-              title={deletingId === event.id ? 'กำลังลบ…' : 'ลบกิจกรรมนี้'}
-              disabled={deletingId === event.id}
-              onPress={() => remove(event)}
-            />
-          )}
         </View>)}
         <Action title="กลับแผนที่ขอนแก่น" onPress={() => router.replace('/')} />
       </ScrollView>

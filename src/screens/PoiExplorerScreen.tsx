@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Link, useFocusEffect } from 'expo-router';
-import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PoiMap } from '../components/PoiMap';
 import { pointsOfInterest } from '../data/pointsOfInterest';
@@ -9,24 +9,11 @@ import { colors } from '../theme/colors';
 import type { PointOfInterest } from '../types/poi';
 
 const dinoLogo = require('../../assets/khon-kaen-dino-icon.png');
-const categories = ['ทั้งหมด', ...Array.from(new Set(pointsOfInterest.map((poi) => poi.category)))];
 
 export function PoiExplorerScreen() {
   const [selectedPoi, setSelectedPoi] = useState(pointsOfInterest[0]);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
   const listRef = useRef<FlatList<PointOfInterest>>(null);
-
-  const filteredPoints = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    return pointsOfInterest.filter((poi) => {
-      const matchesCategory = selectedCategory === 'ทั้งหมด' || poi.category === selectedCategory;
-      const searchable = [poi.name, poi.category, poi.address, poi.description].join(' ').toLowerCase();
-      const matchesSearch = !query || searchable.includes(query);
-      return matchesCategory && matchesSearch;
-    });
-  }, [searchQuery, selectedCategory]);
 
   useFocusEffect(
     useCallback(() => {
@@ -49,7 +36,7 @@ export function PoiExplorerScreen() {
     <FlatList
       ref={listRef}
       contentContainerStyle={styles.content}
-      data={filteredPoints}
+      data={pointsOfInterest}
       keyExtractor={(item) => item.id}
       ListHeaderComponent={
         <View>
@@ -84,61 +71,6 @@ export function PoiExplorerScreen() {
               </View>
             </View>
           </View>
-
-          <View style={styles.searchSection}>
-            <Text style={styles.sectionEyebrow}>SEARCH & FILTER</Text>
-            <Text style={styles.searchTitle}>ค้นหาสถานที่</Text>
-            <TextInput
-              accessibilityLabel="ค้นหาสถานที่"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="ค้นหาชื่อ หมวด หรือที่อยู่…"
-              placeholderTextColor="#8A93A2"
-              returnKeyType="search"
-              style={styles.searchInput}
-            />
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.filterRow}
-            >
-              {categories.map((category) => {
-                const selected = selectedCategory === category;
-                return (
-                  <Pressable
-                    key={category}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    onPress={() => setSelectedCategory(category)}
-                    style={[styles.filterChip, selected && styles.filterChipSelected]}
-                  >
-                    <Text style={[styles.filterChipText, selected && styles.filterChipTextSelected]}>
-                      {category}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            <View style={styles.searchMetaRow}>
-              <Text style={styles.searchMeta}>
-                พบ {filteredPoints.length} จาก {pointsOfInterest.length} สถานที่
-              </Text>
-              {(searchQuery || selectedCategory !== 'ทั้งหมด') && (
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('ทั้งหมด');
-                  }}
-                >
-                  <Text style={styles.clearFilterText}>ล้างตัวกรอง</Text>
-                </Pressable>
-              )}
-            </View>
-          </View>
-
 
           <View style={styles.mapSectionHeader}>
             <View>
@@ -243,12 +175,6 @@ export function PoiExplorerScreen() {
           </Pressable>
         );
       }}
-      ListEmptyComponent={
-        <View style={styles.emptySearch}>
-          <Text style={styles.emptySearchTitle}>ไม่พบสถานที่</Text>
-          <Text style={styles.emptySearchText}>ลองเปลี่ยนคำค้นหา หรือเลือกหมวด “ทั้งหมด”</Text>
-        </View>
-      }
       showsVerticalScrollIndicator={false}
     />
   );
@@ -668,94 +594,6 @@ const styles = StyleSheet.create({
     color: colors.navy,
     fontSize: 10,
     fontWeight: '900',
-  },
-  searchSection: {
-    marginTop: 28,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    padding: 16,
-  },
-  searchTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '900',
-    marginBottom: 11,
-  },
-  searchInput: {
-    minHeight: 48,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: '#F8F9FB',
-    color: colors.text,
-    fontSize: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-  },
-  filterRow: {
-    paddingTop: 12,
-    paddingBottom: 2,
-    paddingRight: 8,
-  },
-  filterChip: {
-    minHeight: 40,
-    justifyContent: 'center',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: '#F4F0E6',
-    paddingHorizontal: 14,
-    marginRight: 8,
-  },
-  filterChipSelected: {
-    borderColor: colors.navy,
-    backgroundColor: colors.navy,
-  },
-  filterChipText: {
-    color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  filterChipTextSelected: {
-    color: colors.gold,
-  },
-  searchMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  searchMeta: {
-    color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  clearFilterText: {
-    color: colors.goldDark,
-    fontSize: 10,
-    fontWeight: '900',
-  },
-  emptySearch: {
-    alignItems: 'center',
-    borderRadius: 20,
-    backgroundColor: '#F4F0E6',
-    paddingHorizontal: 20,
-    paddingVertical: 26,
-    marginTop: 4,
-  },
-  emptySearchTitle: {
-    color: colors.navy,
-    fontSize: 16,
-    fontWeight: '900',
-  },
-  emptySearchText: {
-    color: colors.textMuted,
-    fontSize: 11,
-    lineHeight: 17,
-    textAlign: 'center',
-    marginTop: 5,
   },
   pressed: {
     opacity: 0.72,

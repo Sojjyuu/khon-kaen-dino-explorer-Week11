@@ -3,7 +3,7 @@ import { Alert, AppState, Linking, ScrollView, Text, View } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CampusEvent, deleteEvent, formatEventTime, getEvent, isEventId, isUserCreatedEvent } from '../../src/data/events';
+import { CampusEvent, formatEventTime, getEvent, isEventId } from '../../src/data/events';
 import { pointsOfInterest } from '../../src/data/pointsOfInterest';
 import { cancelEventReminder, getReminders, scheduleEventReminder } from '../../src/services/reminders';
 import { Action, eventStyles as s } from '../../src/components/EventUI';
@@ -50,38 +50,14 @@ export default function EventDetail() {
         Alert.alert('ยังไม่ได้อนุญาตการแจ้งเตือน', 'เปิดการแจ้งเตือนในการตั้งค่า แล้วกลับมากดตั้งเตือนอีกครั้ง', [
           { text: 'ไว้ก่อน', style: 'cancel' }, { text: 'เปิดการตั้งค่า', onPress: () => { void Linking.openSettings().catch(() => Alert.alert('เปิดการตั้งค่าไม่ได้')); } },
         ]);
-      } else Alert.alert('ดำเนินการไม่สำเร็จ', e instanceof Error ? e.message : 'กรุณาลองอีกครั้ง');
+      } else {
+        const detail = e instanceof Error ? e.message : '';
+        Alert.alert('ตั้งการแจ้งเตือนไม่สำเร็จ',
+          /ExpoNotification|NotificationsChannelsProvider|expo-notifications/i.test(detail)
+            ? 'Expo Go บน Android เครื่องนี้ไม่มีโมดูลแจ้งเตือนที่ต้องใช้ ต้องติดตั้ง Android development build เพื่อทดสอบการเตือนจริง'
+            : detail || 'กรุณาลองอีกครั้ง');
+      }
     } finally { await refresh(); busyRef.current = false; setBusy(false); }
-  };
-  const removeEvent = () => {
-    if (!event || !isUserCreatedEvent(event) || busyRef.current) return;
-    Alert.alert(
-      'ลบกิจกรรมนี้?',
-      `“${event.title}” จะถูกลบออกจากเครื่อง และการแจ้งเตือนของกิจกรรมนี้จะถูกยกเลิกด้วย`,
-      [
-        { text: 'ยกเลิก', style: 'cancel' },
-        {
-          text: 'ลบกิจกรรม',
-          style: 'destructive',
-          onPress: () => {
-            void (async () => {
-              busyRef.current = true;
-              setBusy(true);
-              try {
-                await cancelEventReminder(event.id).catch(() => undefined);
-                await deleteEvent(event.id);
-                router.replace('/events');
-              } catch (e) {
-                Alert.alert('ลบกิจกรรมไม่ได้', e instanceof Error ? e.message : 'กรุณาลองอีกครั้ง');
-              } finally {
-                busyRef.current = false;
-                setBusy(false);
-              }
-            })();
-          },
-        },
-      ],
-    );
   };
   const main = reminders.some(n => n.identifier.endsWith(':main'));
   const test = reminders.some(n => n.identifier.endsWith(':test'));
@@ -113,13 +89,6 @@ export default function EventDetail() {
           <Text style={s.text}>ส่งการเตือนทดสอบใน 15 วินาที ใช้ทดสอบขณะเปิดแอปหรือกลับไปหน้าจอหลัก ไม่เปลี่ยนเวลาเตือนจริง</Text>
           <Action title="ทดสอบแจ้งเตือนใน 15 วินาที" disabled={busy} onPress={() => void act('test')} />
         </View>
-        {isUserCreatedEvent(event) && (
-          <View style={s.card}>
-            <Text style={s.subtitle}>จัดการกิจกรรม</Text>
-            <Text style={s.text}>กิจกรรมนี้สร้างบนเครื่องนี้ จึงสามารถลบออกได้</Text>
-            <Action title={busy ? 'กำลังดำเนินการ…' : 'ลบกิจกรรมนี้'} disabled={busy} onPress={removeEvent} />
-          </View>
-        )}
       </>}
       <Action title="กลับรายการกิจกรรม" onPress={() => router.replace('/events')} />
     </ScrollView>

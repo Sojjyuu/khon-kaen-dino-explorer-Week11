@@ -1,8 +1,10 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { getEvent, isEventId } from '../data/events';
 
 export const REMINDER_CHANNEL = 'event-reminders';
+let channelAvailable = false;
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false,
@@ -10,11 +12,20 @@ Notifications.setNotificationHandler({
 });
 
 export async function ensureNotificationPermission() {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL, {
-      name: 'การเตือนกิจกรรมขอนแก่น', importance: Notifications.AndroidImportance.HIGH,
-      sound: 'default',
-    });
+  if (Platform.OS === 'android' && Constants.appOwnership !== 'expo') {
+    try {
+      await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL, {
+        name: 'การเตือนกิจกรรมขอนแก่น', importance: Notifications.AndroidImportance.HIGH,
+        sound: 'default',
+      });
+      channelAvailable = true;
+    } catch {
+      // Some Android Expo Go builds lack the channel provider. Continue with
+      // the default channel; the native notification scheduler decides whether
+      // local notifications are available on this device.
+      channelAvailable = false;
+      // The Expo Go native binary may not expose the channel provider.
+    }
   }
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
@@ -70,7 +81,10 @@ export function scheduleEventReminder(eventId: string, test = false) {
         body: 'แตะเพื่อดูรายละเอียดกิจกรรม', sound: 'default',
         data: { eventId: event.id },
       },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date, channelId: REMINDER_CHANNEL },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE, date,
+        ...(Platform.OS === 'android' && channelAvailable ? { channelId: REMINDER_CHANNEL } : {}),
+      },
     });
   });
 }

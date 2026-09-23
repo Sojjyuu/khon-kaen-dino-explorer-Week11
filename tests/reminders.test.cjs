@@ -5,14 +5,14 @@ const vm = require('node:vm');
 const ts = require('typescript');
 
 // Execute the production service with a fake native boundary; no mobile device required.
-function setup({ granted = true } = {}) {
+function setup({ granted = true, channelFails = false, expoGo = false } = {}) {
   const calls = [];
   const pending = new Map();
   const event = { id: 'demo', startsAt: new Date(Date.now() + 3600000).toISOString() };
   const notifications = {
     setNotificationHandler: () => {},
     AndroidImportance: { HIGH: 4 }, SchedulableTriggerInputTypes: { DATE: 'date' }, DEFAULT_ACTION_IDENTIFIER: 'default',
-    setNotificationChannelAsync: async () => { calls.push('channel'); },
+    setNotificationChannelAsync: async () => { calls.push('channel'); if (channelFails) throw Error('missing native channel provider'); },
     getPermissionsAsync: async () => ({ granted: false, canAskAgain: true }),
     requestPermissionsAsync: async () => { calls.push('permission'); return { granted }; },
     getAllScheduledNotificationsAsync: async () => [...pending.values()],
@@ -23,8 +23,9 @@ function setup({ granted = true } = {}) {
   const code = ts.transpileModule(fs.readFileSync('src/services/reminders.ts', 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
-  vm.runInNewContext(code, { exports, require: name => {
+  vm.runInNewContext(code, { exports, console: { warn: () => {} }, require: name => {
     if (name === 'react-native') return { Platform: { OS: 'android' } };
+    if (name === 'expo-constants') return { __esModule: true, default: { appOwnership: expoGo ? 'expo' : 'standalone' } };
     if (name === 'expo-notifications') return notifications;
     if (name === '../data/events') return {
       getEvent: async id => id === event.id ? event : undefined,
@@ -41,6 +42,17 @@ test('channel precedes permission; trigger is 30 minutes before event; payload o
   assert.deepEqual(calls, ['channel', 'permission']);
   assert.equal(pending.get(id).trigger.date.getTime(), Date.parse(event.startsAt) - 1800000);
   assert.equal(JSON.stringify(pending.get(id).content.data), '{"eventId":"demo"}');
+});
+test('Android Expo Go channel failure falls back to default channel', async () => {
+  const { service, pending } = setup({ channelFails: true });
+  const id = await service.scheduleEventReminder('demo', true);
+  assert.equal(pending.get(id).trigger.channelId, undefined);
+});
+test('Android Expo Go never calls the unavailable native channel provider', async () => {
+  const { service, calls, pending } = setup({ expoGo: true, channelFails: true });
+  const id = await service.scheduleEventReminder('demo', true);
+  assert.equal(calls.includes('channel'), false);
+  assert.equal(pending.get(id).trigger.channelId, undefined);
 });
 test('denied permission and past times do not schedule', async () => {
   const denied = setup({ granted: false });

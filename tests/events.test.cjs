@@ -44,16 +44,3 @@ test('allow a future event under 30 minutes; reminder service separately enforce
   const selected = new Date(Date.now() + 60000);
   assert.equal((await events.addEvent('ใกล้เริ่ม', selected)).startsAt, selected.toISOString());
 });
-
-
-test('delete only user-created events and keep seeded events protected', async () => {
-  const store = new Map();
-  const events = repository(store);
-  const custom = await events.addEvent('ลบทดสอบ', new Date(Date.now() + 3600000));
-  assert.equal(await events.deleteEvent(custom.id), true);
-  assert.equal(await events.getEvent(custom.id), undefined);
-
-  const seeded = (await events.getEvents()).find(event => event.id.startsWith('explore-'));
-  assert.ok(seeded);
-  await assert.rejects(events.deleteEvent(seeded.id), /กิจกรรมที่สร้างเอง/);
-});

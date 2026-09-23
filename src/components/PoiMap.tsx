@@ -8,11 +8,11 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
 import MapView, {
   Callout,
   MapMarker,
   Marker,
-  PROVIDER_GOOGLE,
 } from 'react-native-maps';
 
 import { colors } from '../theme/colors';
@@ -23,6 +23,21 @@ type PoiMapProps = {
 };
 
 const MAP_DELTA = 0.012;
+
+// Expo Go on some Android devices shows an empty native Google map. The Android
+// preview uses the same Leaflet/OpenStreetMap approach as the working sample.
+const webMapHtml = (poi: PointOfInterest) => {
+  const location = JSON.stringify({ lat: poi.latitude, lng: poi.longitude, name: poi.name, address: poi.address })
+    .replace(/</g, '\\u003c');
+  return `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>html,body,#map{height:100%;margin:0;background:#e8edf2} .leaflet-container{font-family:system-ui,sans-serif}</style>
+    </head><body><div id="map"></div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>const point=${location};const map=L.map('map').setView([point.lat,point.lng],15);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+    L.marker([point.lat,point.lng]).addTo(map).bindPopup('<strong>'+point.name+'</strong><br>'+point.address).openPopup();
+    window.centerOnPoi=function(){map.setView([point.lat,point.lng],16,{animate:true});};</script></body></html>`;
+};
 
 const regionFor = (poi: PointOfInterest, delta = MAP_DELTA) => ({
   latitude: poi.latitude,
@@ -35,6 +50,7 @@ export function PoiMap({ poi }: PoiMapProps) {
   const mapRef = useRef<MapView>(null);
   const markerRef = useRef<MapMarker>(null);
   const fullMapRef = useRef<MapView>(null);
+  const fullWebMapRef = useRef<WebView>(null);
   const [isFullMapVisible, setFullMapVisible] = useState(false);
 
   useEffect(() => {
@@ -45,17 +61,25 @@ export function PoiMap({ poi }: PoiMapProps) {
   }, [poi.id, poi.latitude, poi.longitude]);
 
   const centerFullMap = () => {
-    fullMapRef.current?.animateToRegion(regionFor(poi, 0.009), 450);
+    if (Platform.OS === 'android') fullWebMapRef.current?.injectJavaScript('window.centerOnPoi && window.centerOnPoi(); true;');
+    else fullMapRef.current?.animateToRegion(regionFor(poi, 0.009), 450);
   };
 
   return (
     <>
       <View style={styles.frame}>
-        <MapView
+        {Platform.OS === 'android' ? <WebView
+          key={poi.id}
+          originWhitelist={['*']}
+          source={{ html: webMapHtml(poi), baseUrl: 'https://unpkg.com' }}
+          javaScriptEnabled
+          domStorageEnabled
+          style={styles.map}
+        /> : <MapView
           ref={mapRef}
           initialRegion={regionFor(poi)}
           loadingEnabled
-          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+          provider={undefined}
           showsCompass
           style={styles.map}
         >
@@ -73,7 +97,7 @@ export function PoiMap({ poi }: PoiMapProps) {
               </View>
             </Callout>
           </Marker>
-        </MapView>
+        </MapView>}
 
         <View pointerEvents="none" style={styles.mapLabel}>
           <Text style={styles.mapLabelEyebrow}>NOW EXPLORING</Text>
@@ -100,11 +124,19 @@ export function PoiMap({ poi }: PoiMapProps) {
         visible={isFullMapVisible}
       >
         <View style={styles.fullscreen}>
-          <MapView
+          {Platform.OS === 'android' ? <WebView
+            key={poi.id}
+            ref={fullWebMapRef}
+            originWhitelist={['*']}
+            source={{ html: webMapHtml(poi), baseUrl: 'https://unpkg.com' }}
+            javaScriptEnabled
+            domStorageEnabled
+            style={styles.map}
+          /> : <MapView
             ref={fullMapRef}
             initialRegion={regionFor(poi, 0.009)}
             loadingEnabled
-            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+            provider={undefined}
             showsBuildings
             showsCompass
             showsScale
@@ -116,7 +148,7 @@ export function PoiMap({ poi }: PoiMapProps) {
               pinColor={colors.pin}
               title={poi.name}
             />
-          </MapView>
+          </MapView>}
 
           <SafeAreaView pointerEvents="box-none" style={styles.fullOverlay}>
             <View style={styles.fullTopBar}>

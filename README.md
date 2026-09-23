@@ -1,83 +1,37 @@
 # Khon Kaen Dino Explorer — Week 11
 
-Final Assignment integration บน Expo + React Native + TypeScript โดยรวมงานเดิมให้อยู่ในแอปเดียวและเชื่อม flow เข้าหากัน
+## Android ผ่าน Expo Go (ชุดทดลอง)
 
-## ฟีเจอร์หลัก
-
-- POI ขอนแก่น 10 แห่ง
-- Map / Marker / selected POI
-- Search และ Category Filter
-- My Trip พร้อม AsyncStorage
-- Profile
-- Camera / Image Picker
-- Post-capture filters
-- บันทึกภาพที่แต่งแล้วลง Photos บน iOS/Android
-- Event / Reminder
-- Local notifications
-- Notification → Event detail
-- สร้างและลบกิจกรรมส่วนตัว
-
-## Assignment integration
-
-- **Profile assignment** → `/profile`
-- **Search / filter concept** → หน้า Home
-- **Team-builder / favorite concept** → `/trip`
-- **Camera assignment** → `/camera`
-- **Location / Map** → POI map บนหน้า Home
-- **Week 11 Notifications** → `/events` และ `/events/[id]`
-
-## ติดตั้งและรัน
+ชุดนี้เพิ่มสคริปต์หลังติดตั้งแพ็กเกจแบบเดียวกับโปรเจกต์ตัวอย่าง เพื่อให้โมดูล push notification ที่ไม่มีใน Expo Go บน Android ไม่ทำให้แอปหยุดตั้งแต่เปิดหน้าแรก **ยังต้องทดสอบการตั้งและรับ local notification บนอุปกรณ์จริง** แผนที่บน Android ใช้ Leaflet/OpenStreetMap ใน WebView ตามแนวทางของโปรเจกต์ตัวอย่าง ส่วน iOS คงแผนที่เดิมไว้ แผนที่เว็บต้องเชื่อมต่ออินเทอร์เน็ตเพื่อโหลด Leaflet และแผ่นภาพแผนที่
 
 ```bash
-npm install
+npm ci
+npx expo start --clear
+```
+
+เปิด Expo Go บน Android ที่รองรับ SDK 57 แล้วสแกน QR จาก Terminal โทรศัพท์กับคอมพิวเตอร์ต้องเข้าถึงกันผ่านเครือข่ายเดียวกัน ถ้าสแกนแล้วขึ้น SDK mismatch ให้ตรวจรุ่น Expo Go ที่ติดตั้ง ส่วน `npm run android` ใช้สร้างแอปผ่านสาย USB หรือ Emulator จึงไม่ใช่คำสั่งทดสอบ Expo Go
+
+สคริปต์ `scripts/patch-notifications.js` แก้ไฟล์ภายใน `node_modules` หลัง `npm ci` เท่านั้น ไม่มีผลกับ Expo Go ในโทรศัพท์และไม่เพิ่ม native module ที่ไม่มีอยู่จริง หากอัปเดต `expo-notifications` ต้องตรวจความเข้ากันได้ของสคริปต์อีกครั้ง
+
+ข้อความเตือน `expo-notifications functionality is not fully supported in Expo Go` เป็นข้อจำกัดของ Expo Go ที่ยังแสดงได้ แม้แผนที่จะทำงานแล้ว ข้อความเตือนนี้ไม่ได้บอกว่าแผนที่เสีย
+
+ใน Android Expo Go โค้ดจะซ่อนเฉพาะ warning ที่ทราบแล้วของ MediaLibrary และ remote push จากหน้าจอ LogBox ข้อความ error อื่นยังแสดงตามปกติ การซ่อน warning ไม่เปลี่ยนความสามารถของ Expo Go และข้อความอาจยังอยู่ใน terminal
+
+### กล้องและการแจ้งเตือนในชุดนี้
+
+- ถ่ายหรือเลือกรูป เลือกโทนธรรมชาติ/อบอุ่น/เย็น/วินเทจ แล้วกด **บันทึกภาพลงเครื่อง** ภาพที่บันทึกเป็นภาพตามกรอบพรีวิวพร้อมโทนสีที่เลือก ฟิลเตอร์ใช้หลังถ่าย ไม่ใช่ฟิลเตอร์สดบนหน้ากล้อง
+- Android Expo Go ไม่เรียกสร้าง notification channel ซึ่งทำให้เครื่องทดสอบบางรุ่นเกิด native error แอปจะลองกำหนดเวลาการเตือนโดยใช้ช่องทางปริยายแทน ถ้าตัวจัดการ notification ใน Expo Go ของเครื่องนั้นยังไม่มี native module ที่จำเป็น แอปจะแสดงข้อความอธิบายแทน raw crash และต้องทดสอบผ่าน development build เพื่อให้การแจ้งเตือนของระบบทำงานครบ
+- การบันทึกรูปใช้ MediaLibrary API ที่ Expo Go เครื่องทดสอบรองรับ Expo Go อาจเตือนเรื่องสิทธิ์คลังภาพที่มีข้อจำกัด แต่หน้า Camera ยังโหลดได้ และทดสอบการบันทึกภาพได้
+
+## Week 11: กิจกรรมและการแจ้งเตือน
+
+หน้าแรกมีปุ่ม **กิจกรรมและการแจ้งเตือน** สำหรับดูหรือสร้างกิจกรรม ตั้งเตือนก่อนเริ่ม 30 นาที ยกเลิก และทดสอบการแจ้งเตือนใน 15 วินาที ดู [คู่มือ Lab 11](docs/lab-11-notifications.md) สำหรับขั้นตอนการทดสอบบนอุปกรณ์จริง
+
+```bash
+npm run check
 npm test
-npm run typecheck
-npx expo start -c
 ```
 
-เปิดด้วย Expo Go หรือ emulator/simulator ที่รองรับฟีเจอร์ native ที่ต้องการทดสอบ
+แอปมีสถานที่ 10 แห่ง แผนที่ Android ใช้ Leaflet/OpenStreetMap ใน WebView จึงต้องเชื่อมต่ออินเทอร์เน็ต; iPhone ใช้แผนที่ native กล้องถ่ายหรือเลือกรูป เลือกโทนสีหลังถ่าย และกดบันทึกภาพลงเครื่อง
 
-## หมายเหตุเรื่อง Expo Notifications บน Android
-
-ข้อจำกัดที่พบในการทดสอบบน Android มาจาก **Expo Go** ไม่ใช่จาก Android โดยตรง
-
-ตั้งแต่ **Expo SDK 53 เป็นต้นไป** Expo Go บน Android ไม่รองรับ **Push Notification / Remote Notification** ที่ส่งมาจากเซิร์ฟเวอร์แล้ว เพราะการทำ push notification ต้องผูกกับ native credentials ของแอปเอง เช่น Firebase Cloud Messaging (FCM) และ configuration ที่ถูกฝังไว้ตั้งแต่ตอน build แอป ดังนั้นการทดสอบ push notification บน Android ต้องใช้ **Development Build / EAS Build** แทน Expo Go
-
-อย่างไรก็ตาม **Local Notification / Scheduled Notification** ที่สร้างจากภายในแอปด้วย `expo-notifications` ยังรองรับใน Expo Go อยู่
-
-สำหรับโปรเจกต์นี้ Reminder ใช้แนวคิด **Local / Scheduled Notification** เป็นหลัก ส่วนถ้าต้องการทดสอบ Push Notification บน Android แบบครบจริง ควรสร้าง Development Build เช่น:
-
-```bash
-npx eas-cli@latest build --platform android --profile development
-```
-
-หรือใช้ Preview Build ตามขั้นตอนของสัปดาห์ถัดไป
-
-อ้างอิง: Expo Notifications documentation — https://docs.expo.dev/versions/latest/sdk/notifications/
-
-## ตรวจงานอัตโนมัติ
-
-GitHub Actions workflow: **Week 11 Final Quality Check**
-
-ตรวจ:
-
-- `npm test`
-- `npm run typecheck`
-
-## เอกสาร
-
-- [Lab 11 Notifications](docs/lab-11-notifications.md)
-- [Final Submission Checklist](docs/final-submission.md)
-
-## หมายเหตุแพลตฟอร์ม
-
-- Map native ใช้ `react-native-maps`
-- Local notifications ต้องทดสอบบนอุปกรณ์ที่รองรับ
-- Save Photos ใช้ `expo-media-library` บน iOS/Android
-- ข้อมูลผู้พัฒนาและช่องทางติดต่ออยู่ใน `app/profile.tsx`
-
-## Repository สำหรับส่ง
-
-https://github.com/Sojjyuu/khon-kaen-dino-explorer-Week11
-
-ใช้ branch `main` และไม่อัปโหลด `node_modules`, `.expo`, `.env` หรือ secret/API key
+Expo Go บน Android มีข้อจำกัดด้านคลังภาพและ remote push notifications; local notifications บางเครื่องอาจต้องใช้ development build หาก native module ไม่ครบ สคริปต์ `scripts/patch-notifications.js` ทำงานหลัง `npm ci` เพื่อเลี่ยงการเรียก push module ที่ไม่มีใน Expo Go การซ่อน warning ที่รู้จักใน LogBox ไม่เปลี่ยนข้อจำกัดของ Expo Go
