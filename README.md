@@ -37,6 +37,24 @@ npx expo start -c
 
 เปิดด้วย Expo Go หรือ emulator/simulator ที่รองรับฟีเจอร์ native ที่ต้องการทดสอบ
 
+## หมายเหตุเรื่อง Expo Notifications บน Android
+
+ข้อจำกัดที่พบในการทดสอบบน Android มาจาก **Expo Go** ไม่ใช่จาก Android โดยตรง
+
+ตั้งแต่ **Expo SDK 53 เป็นต้นไป** Expo Go บน Android ไม่รองรับ **Push Notification / Remote Notification** ที่ส่งมาจากเซิร์ฟเวอร์แล้ว เพราะการทำ push notification ต้องผูกกับ native credentials ของแอปเอง เช่น Firebase Cloud Messaging (FCM) และ configuration ที่ถูกฝังไว้ตั้งแต่ตอน build แอป ดังนั้นการทดสอบ push notification บน Android ต้องใช้ **Development Build / EAS Build** แทน Expo Go
+
+อย่างไรก็ตาม **Local Notification / Scheduled Notification** ที่สร้างจากภายในแอปด้วย `expo-notifications` ยังรองรับใน Expo Go อยู่
+
+สำหรับโปรเจกต์นี้ Reminder ใช้แนวคิด **Local / Scheduled Notification** เป็นหลัก ส่วนถ้าต้องการทดสอบ Push Notification บน Android แบบครบจริง ควรสร้าง Development Build เช่น:
+
+```bash
+npx eas-cli@latest build --platform android --profile development
+```
+
+หรือใช้ Preview Build ตามขั้นตอนของสัปดาห์ถัดไป
+
+อ้างอิง: Expo Notifications documentation — https://docs.expo.dev/versions/latest/sdk/notifications/
+
 ## ตรวจงานอัตโนมัติ
 
 GitHub Actions workflow: **Week 11 Final Quality Check**
